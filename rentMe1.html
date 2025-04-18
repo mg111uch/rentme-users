@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheet Data List</title>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+          background-color: #f0f0f0;
+      }
+      h1 {
+          text-align: center;
+          color: #772828;
+      }
+      .loading, .error {
+            text-align: center;
+            color: #555;
+            font-size: 18px;
+        } 
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden; /* for rounded corners of the table */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        th, td {
+          border-bottom: 1px solid #ddd;
+          padding: 15px;
+          text-align: left;
+        }
+
+        th {
+          background-color: #04AA6D;
+          color: white;
+        }
+        @media screen and (max-width: 600px) {
+          table {
+            border: 0;
+          }
+          thead {
+            display: none;
+          }
+          tr {
+            margin-bottom: 10px;
+            display: block;
+            border-bottom: 2px solid #ddd;
+          }
+          td {
+            display: block;
+            text-align: right;
+            font-size: 0.8em;
+            border-bottom: 1px dotted #ddd;
+          }
+          td:before {
+            content: attr(data-label);
+            float: left;
+            text-transform: uppercase;
+            font-weight: bold;
+          }
+        }
+    </style>
+</head>
+<body>
+  <h1>💙 Google Sheet Data 🚀</h1>
+  <div class="loading" id="loading">Loading...</div>  
+  <div class="error" id="error" style="display: none;"></div> 
+  
+  <div id="app"></div>
+  <div id="data-table-container"></div>
+  
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script> 
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script> 
+
+  <!-- <script> -->
+  <script type="text/jsx">
+
+    const app = document.getElementById('app');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    
+    function HomePage() {
+      
+      const [likes, setLikes] = React.useState(0);
+
+      function handleClick() {
+          setLikes(likes + 1);
+        }
+      
+      const SHEET_ID = '1u-QIUZT6b09gkj3xf4u9KRpRprkUn4PTAaOl9G5fitU'; 
+      const API_KEY = 'AIzaSyDTBUXGrjE-BmYeONaAsBd56qGPeTGHF8c';
+      const range = 'Sheet1!A:C'; 
+
+      const API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
+
+      async function fetchSheetData() {
+        try {
+          const response = await fetch(API_URL);
+          if (!response.ok) throw new Error('Failed to fetch data');
+          const data = await response.json();
+          
+          // Clear loading message
+          loading.style.display = 'none';
+
+          const tableHtml = generateTableHTML(data.values);
+          document.getElementById('data-table-container').innerHTML = tableHtml;
+        }catch (error) {
+            loading.style.display = 'none';
+            errorDiv.textContent = 'Error: ' + error.message;
+            errorDiv.style.display = 'block';
+        }
+      }
+
+      function generateTableHTML(dataValues) {
+            if (!dataValues || dataValues.length === 0) {
+                return '<p>No data found in the specified range.</p>';
+            }
+
+            let tableHtml = '<table>';
+            let headerRow = dataValues[0]; // First row is assumed to be the header
+
+            // Create table header
+            tableHtml += '<thead><tr>';
+            headerRow.forEach(header => {
+                tableHtml += `<th>${header}</th>`;
+            });
+            tableHtml += '</tr></thead>';
+
+            tableHtml += '<tbody>';
+            // Create table rows
+            for (let i = 1; i < dataValues.length; i++) {
+                let row = dataValues[i];
+                tableHtml += '<tr>';
+                 for(let j=0; j< row.length; j++){
+                    tableHtml += `<td data-label="${headerRow[j]}">${row[j]}</td>`;
+                 }
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</tbody></table>';
+            return tableHtml;
+        }
+
+      return (
+        <div>           
+          <button onClick={handleClick}>Like({likes})</button>
+          <button onClick={fetchSheetData}>Fetch Data</button>
+        </div>
+      );
+    }
+    
+    ReactDOM.render(<HomePage />, app);
+  </script> 
+
+</body>
+</html>
